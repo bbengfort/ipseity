@@ -1,0 +1,16 @@
+syntax = "proto3";
+package pb;
+
+message IdentityRequest {
+    string key = 1;
+}
+
+message IdentityReply {
+    string key = 1;
+    int64 identity = 2;
+}
+
+
+service Identity {
+    rpc Next (IdentityRequest) returns (IdentityReply) {}
+}
