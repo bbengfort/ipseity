@@ -12,8 +12,8 @@ import (
 
 // NewBenchmark creates the benchmark for the specified number of clients and
 // number of messages per client, then runs the benchmark.
-func NewBenchmark(nClients, msgsPerClient int, addr string) (*Benchmark, error) {
-	bench := &Benchmark{server: addr, nClients: nClients, messages: msgsPerClient}
+func NewBenchmark(nClients, msgsPerClient int, addr, stype string) (*Benchmark, error) {
+	bench := &Benchmark{stype: stype, addr: addr, nClients: nClients, messages: msgsPerClient}
 	err := bench.Run()
 	return bench, err
 }
@@ -22,7 +22,8 @@ func NewBenchmark(nClients, msgsPerClient int, addr string) (*Benchmark, error) 
 // own connections concurrently for a fixed number of messages, then returns
 // the observed throughput from the client side.
 type Benchmark struct {
-	server   string        // The address of the server to connect to
+	stype    string        // The type of ipseity server
+	addr     string        // The address of the server to connect to
 	nClients int           // Number of concurrent clients
 	messages int           // Number of messages per client
 	duration time.Duration // Total amount of time it took to send all messages
@@ -37,7 +38,7 @@ func (b *Benchmark) Run() error {
 	for i := 0; i < b.nClients; i++ {
 		group.Go(func() error {
 			key := fmt.Sprintf("%04X", rand.Intn(10000))
-			client, err := NewClient(b.server)
+			client, err := NewClient(b.addr)
 			if err != nil {
 				return err
 			}
@@ -87,9 +88,9 @@ func (b *Benchmark) Duration() time.Duration {
 }
 
 // String returns a CSV string of the benchmark data.
-// n_clients,n_messages,duration,throughput
+// server,n_clients,n_messages,duration,throughput
 func (b *Benchmark) String() string {
-	return fmt.Sprintf("%d,%d,%s,%0.4f",
-		b.NumClients(), b.NumMessages(), b.Duration(), b.Throughput(),
+	return fmt.Sprintf("%s,%d,%d,%s,%0.4f",
+		b.stype, b.NumClients(), b.NumMessages(), b.Duration(), b.Throughput(),
 	)
 }

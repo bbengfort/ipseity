@@ -35,6 +35,11 @@ func main() {
 					Usage: "address for the server to listen on",
 					Value: ":3265",
 				},
+				cli.StringFlag{
+					Name:  "s, stype",
+					Usage: "type of server to initialize",
+					Value: "simple",
+				},
 				cli.DurationFlag{
 					Name:  "u, uptime",
 					Usage: "only run for a specified amount of time",
@@ -81,6 +86,11 @@ func main() {
 					Usage: "messages per client to send to server",
 					Value: 5000,
 				},
+				cli.StringFlag{
+					Name:  "s, stype",
+					Usage: "expected type of server running",
+					Value: "",
+				},
 			},
 		},
 	}
@@ -95,7 +105,10 @@ func main() {
 
 func serve(c *cli.Context) error {
 
-	server := ipseity.New()
+	server, err := ipseity.New(c.String("stype"))
+	if err != nil {
+		return cli.NewExitError(err.Error(), 1)
+	}
 
 	if uptime := c.Duration("uptime"); uptime > 0 {
 		time.AfterFunc(uptime, func() {
@@ -135,7 +148,7 @@ func bench(c *cli.Context) error {
 		return cli.NewExitError("must specify an address to connect to", 1)
 	}
 
-	bench, err := ipseity.NewBenchmark(c.Int("clients"), c.Int("messages"), addr)
+	bench, err := ipseity.NewBenchmark(c.Int("clients"), c.Int("messages"), addr, c.String("stype"))
 	if err != nil {
 		return cli.NewExitError(err.Error(), 1)
 	}
