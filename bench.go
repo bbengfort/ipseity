@@ -3,6 +3,7 @@ package ipseity
 import (
 	"context"
 	"fmt"
+	"io"
 	"math/rand"
 	"time"
 
@@ -36,24 +37,11 @@ func (b *Benchmark) Run() error {
 	start := time.Now()
 
 	for i := 0; i < b.nClients; i++ {
-		group.Go(func() error {
-			key := fmt.Sprintf("%04X", rand.Intn(10000))
-			client, err := NewClient(b.addr)
-			if err != nil {
-				return err
-			}
-
-			for j := 0; j < b.messages; j++ {
-				ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-				if _, err := client.Next(ctx, &pb.IdentityRequest{Key: key}); err != nil {
-					cancel()
-					return err
-				}
-				cancel()
-			}
-
-			return nil
-		})
+		if b.stype == "stream" {
+			group.Go(b.addStreamClient)
+		} else {
+			group.Go(b.addClient)
+		}
 	}
 
 	if err := group.Wait(); err != nil {
@@ -93,4 +81,64 @@ func (b *Benchmark) String() string {
 	return fmt.Sprintf("%s,%d,%d,%s,%0.4f",
 		b.stype, b.NumClients(), b.NumMessages(), b.Duration(), b.Throughput(),
 	)
+}
+
+// addClient runs a normal client against the server
+func (b *Benchmark) addClient() error {
+	key := fmt.Sprintf("%04X", rand.Intn(10000))
+	client, err := NewClient(b.addr)
+	if err != nil {
+		return err
+	}
+
+	for j := 0; j < b.messages; j++ {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		if _, err := client.Next(ctx, &pb.IdentityRequest{Key: key}); err != nil {
+			cancel()
+			return err
+		}
+		cancel()
+	}
+
+	return nil
+}
+
+// addStreamClient runs a streaming client against the server
+func (b *Benchmark) addStreamClient() error {
+	prefix := fmt.Sprintf("%04X", rand.Intn(10000))
+	client, err := NewStreamClient(b.addr)
+	if err != nil {
+		return err
+	}
+
+	stream, err := client.Next(context.Background())
+	if err != nil {
+		return err
+	}
+
+	// Fire off routine to read all messages from the server.
+	done := make(chan error)
+	go func() {
+		for {
+			if _, err := stream.Recv(); err != nil {
+				if err == io.EOF {
+					done <- nil
+				}
+				done <- err
+				return
+			}
+		}
+	}()
+
+	// Send all identity requests to the server
+	for j := 0; j < b.messages; j++ {
+		req := &pb.IdentityRequest{Key: fmt.Sprintf("%s-%04X", prefix, j)}
+		if err := stream.Send(req); err != nil {
+			return err
+		}
+	}
+
+	// Close the stream to let the server know we're done
+	stream.CloseSend()
+	return <-done
 }

@@ -150,10 +150,106 @@ var _Identity_serviceDesc = grpc.ServiceDesc{
 	Metadata: "identity.proto",
 }
 
+// Client API for StreamIdentity service
+
+type StreamIdentityClient interface {
+	Next(ctx context.Context, opts ...grpc.CallOption) (StreamIdentity_NextClient, error)
+}
+
+type streamIdentityClient struct {
+	cc *grpc.ClientConn
+}
+
+func NewStreamIdentityClient(cc *grpc.ClientConn) StreamIdentityClient {
+	return &streamIdentityClient{cc}
+}
+
+func (c *streamIdentityClient) Next(ctx context.Context, opts ...grpc.CallOption) (StreamIdentity_NextClient, error) {
+	stream, err := grpc.NewClientStream(ctx, &_StreamIdentity_serviceDesc.Streams[0], c.cc, "/pb.StreamIdentity/Next", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &streamIdentityNextClient{stream}
+	return x, nil
+}
+
+type StreamIdentity_NextClient interface {
+	Send(*IdentityRequest) error
+	Recv() (*IdentityReply, error)
+	grpc.ClientStream
+}
+
+type streamIdentityNextClient struct {
+	grpc.ClientStream
+}
+
+func (x *streamIdentityNextClient) Send(m *IdentityRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *streamIdentityNextClient) Recv() (*IdentityReply, error) {
+	m := new(IdentityReply)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// Server API for StreamIdentity service
+
+type StreamIdentityServer interface {
+	Next(StreamIdentity_NextServer) error
+}
+
+func RegisterStreamIdentityServer(s *grpc.Server, srv StreamIdentityServer) {
+	s.RegisterService(&_StreamIdentity_serviceDesc, srv)
+}
+
+func _StreamIdentity_Next_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(StreamIdentityServer).Next(&streamIdentityNextServer{stream})
+}
+
+type StreamIdentity_NextServer interface {
+	Send(*IdentityReply) error
+	Recv() (*IdentityRequest, error)
+	grpc.ServerStream
+}
+
+type streamIdentityNextServer struct {
+	grpc.ServerStream
+}
+
+func (x *streamIdentityNextServer) Send(m *IdentityReply) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *streamIdentityNextServer) Recv() (*IdentityRequest, error) {
+	m := new(IdentityRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+var _StreamIdentity_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "pb.StreamIdentity",
+	HandlerType: (*StreamIdentityServer)(nil),
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "Next",
+			Handler:       _StreamIdentity_Next_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+	},
+	Metadata: "identity.proto",
+}
+
 func init() { proto.RegisterFile("identity.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 136 bytes of a gzipped FileDescriptorProto
+	// 156 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0xcb, 0x4c, 0x49, 0xcd,
 	0x2b, 0xc9, 0x2c, 0xa9, 0xd4, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x2a, 0x48, 0x52, 0x52,
 	0xe6, 0xe2, 0xf7, 0x84, 0x8a, 0x06, 0xa5, 0x16, 0x96, 0xa6, 0x16, 0x97, 0x08, 0x09, 0x70, 0x31,
@@ -161,6 +257,7 @@ var fileDescriptor0 = []byte{
 	0x08, 0x45, 0x05, 0x39, 0x95, 0x98, 0x4a, 0x84, 0xa4, 0xb8, 0x38, 0x60, 0xa6, 0x4b, 0x30, 0x29,
 	0x30, 0x6a, 0x30, 0x07, 0xc1, 0xf9, 0x46, 0x36, 0x5c, 0x1c, 0x30, 0xed, 0x42, 0x06, 0x5c, 0x2c,
 	0x7e, 0xa9, 0x15, 0x25, 0x42, 0xc2, 0x7a, 0x05, 0x49, 0x7a, 0x68, 0x36, 0x4b, 0x09, 0xa2, 0x0a,
-	0x16, 0xe4, 0x54, 0x2a, 0x31, 0x24, 0xb1, 0x81, 0x1d, 0x6b, 0x0c, 0x08, 0x00, 0x00, 0xff, 0xff,
-	0x71, 0x5e, 0xe0, 0xd2, 0xbe, 0x00, 0x00, 0x00,
+	0x16, 0xe4, 0x54, 0x2a, 0x31, 0x18, 0xb9, 0x71, 0xf1, 0x05, 0x97, 0x14, 0xa5, 0x26, 0xe6, 0xc2,
+	0xcd, 0x30, 0x21, 0xd5, 0x0c, 0x0d, 0x46, 0x03, 0xc6, 0x24, 0x36, 0xb0, 0xa7, 0x8d, 0x01, 0x01,
+	0x00, 0x00, 0xff, 0xff, 0xef, 0x5f, 0xa5, 0xaa, 0x06, 0x01, 0x00, 0x00,
 }

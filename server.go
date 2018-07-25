@@ -13,7 +13,6 @@ import (
 // Server is the interface for the many implementations of the identity server.
 type Server interface {
 	Listen(addr string) error
-	Next(ctx context.Context, in *pb.IdentityRequest) (*pb.IdentityReply, error)
 }
 
 // Embedable server type that implements the listen method.

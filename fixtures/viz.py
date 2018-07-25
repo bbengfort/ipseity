@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import argparse
 
 import numpy as np
@@ -10,9 +11,13 @@ import matplotlib.pyplot as plt
 sns.set_style('whitegrid')
 sns.set_context('notebook')
 
+FIXTURES = os.path.dirname(__file__)
 
-def draw_benchmark(path, vtype='line'):
+
+def draw_benchmark(path, vtype='line', exclude=None):
+    exclude = set([]) if exclude is None else set(exclude)
     df = pd.read_csv(path)
+    df = df[~df['server'].isin(exclude)]
 
     if vtype == 'both':
         _, axes = plt.subplots(ncols=2, figsize=(18,6), sharey=True)
@@ -30,7 +35,7 @@ def draw_benchmark(path, vtype='line'):
             raise ValueError("unknown viz type: '{}'".format(vtype))
 
     plt.tight_layout()
-    plt.savefig("benchmark.png")
+    plt.savefig(os.path.join(FIXTURES, "benchmark.png"))
 
 
 def draw_line_benchmark(df, ax):
@@ -69,7 +74,11 @@ if __name__ == '__main__':
         '-t', '--type', choices=('bar', 'line', 'both'), default='line',
         help='specify the type of chart to produce'
     )
+    parser.add_argument(
+        '-e', '--exclude', nargs="*",
+        help='specify server types to exclude from visualization',
+    )
     parser.add_argument("data")
 
     args = parser.parse_args()
-    draw_benchmark(args.data, args.type)
+    draw_benchmark(args.data, args.type, args.exclude)

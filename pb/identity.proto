@@ -14,3 +14,7 @@ message IdentityReply {
 service Identity {
     rpc Next (IdentityRequest) returns (IdentityReply) {}
 }
+
+service StreamIdentity {
+    rpc Next (stream IdentityRequest) returns (stream IdentityReply) {}
+}
